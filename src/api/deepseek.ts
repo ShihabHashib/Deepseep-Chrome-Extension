@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as vscode from 'vscode';
+import { WorkspaceManager } from '../utils/WorkspaceManager';
 
 export class DeepSeekAPI {
     private apiKey: string;
@@ -27,19 +28,53 @@ export class DeepSeekAPI {
         return true;
     }
 
-    public async generateCompletion(prompt: string): Promise<string> {
+    public async generateCompletion(
+        prompt: string,
+        includeContext: boolean = true,
+        images: string[] = []
+    ): Promise<string> {
         if (!await this.checkApiKey()) {
             throw new Error('API key not configured');
         }
 
         try {
+            let fullPrompt = prompt;
+
+            if (includeContext) {
+                const fileContext = WorkspaceManager.getFileContext();
+                const relatedFiles = await WorkspaceManager.getRelatedFiles(
+                    vscode.window.activeTextEditor?.document.fileName || ''
+                );
+
+                fullPrompt = `Context:\n${fileContext}\n\nRelated Files:\n`;
+                relatedFiles.forEach((content, filepath) => {
+                    fullPrompt += `\nFile: ${filepath}\n${content}\n`;
+                });
+            }
+
+            if (images.length > 0) {
+                fullPrompt += '\n[Images attached]\n';
+            }
+
+            fullPrompt += `\nQuestion: ${prompt}`;
+
             const response = await axios.post(
                 `${this.baseURL}/chat/completions`,
                 {
                     model: 'deepseek-coder-33b-instruct',
-                    messages: [{ role: 'user', content: prompt }],
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are an AI programming assistant. Analyze the provided code context, related files, and images to provide accurate and helpful responses.'
+                        },
+                        {
+                            role: 'user',
+                            content: fullPrompt,
+                            images: images // Add images to the request
+                        }
+                    ],
                     temperature: 0.7,
-                    max_tokens: 1000
+                    max_tokens: 2000
                 },
                 {
                     headers: {

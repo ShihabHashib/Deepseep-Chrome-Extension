@@ -18,11 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 		)
 	);
 
-	// Move sidebar to secondary (right) side bar
-	vscode.commands.executeCommand('workbench.action.moveEditorToNextGroup').then(() => {
-		vscode.commands.executeCommand('workbench.view.extension.bakaai-sidebar');
-	});
-
 	const api = new DeepSeekAPI();
 
 	// Register the AI command

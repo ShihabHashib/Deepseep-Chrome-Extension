@@ -33,7 +33,7 @@
         "mac": "cmd+shift+a"
       },
       {
-        "command": "workbench.view.extension.bakaai-sidebar",
+        "command": "bakaai.openAISidebar",
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l"
       }
